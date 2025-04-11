@@ -61,6 +61,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				finance: {
+					income: '#4ade80', // Green for income
+					expense: '#f87171', // Red for expenses
+					savings: '#60a5fa', // Blue for savings
+					budget: '#8b5cf6', // Purple for budget
+					alert: '#f59e0b', // Amber for alerts
+					success: '#10b981', // Emerald for success
 				}
 			},
 			borderRadius: {
