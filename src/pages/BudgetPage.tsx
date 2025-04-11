@@ -1,22 +1,16 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MobileLayout from "@/components/layout/MobileLayout";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PieChart, BarChart, DollarSign, Utensils, Car, Film, ShoppingBag, Home, Wifi, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-// Mock data
-const mockBudgets = [
-  { id: 1, category: "Food & Dining", spent: 420.50, limit: 600, color: "bg-violet-500", icon: <Utensils size={18} /> },
-  { id: 2, category: "Transportation", spent: 145.20, limit: 150, color: "bg-blue-500", icon: <Car size={18} /> },
-  { id: 3, category: "Entertainment", spent: 85.30, limit: 200, color: "bg-pink-500", icon: <Film size={18} /> },
-  { id: 4, category: "Shopping", spent: 250.75, limit: 300, color: "bg-emerald-500", icon: <ShoppingBag size={18} /> },
-  { id: 5, category: "Housing", spent: 1200.00, limit: 1200, color: "bg-amber-500", icon: <Home size={18} /> },
-  { id: 6, category: "Utilities", spent: 180.25, limit: 250, color: "bg-indigo-500", icon: <Wifi size={18} /> },
-];
+import BudgetCharts from "@/components/BudgetCharts";
+import TransactionForm from "@/components/TransactionForm";
+import { useBudgets } from "@/hooks/useBudgets";
+import { useTransactions } from "@/hooks/useTransactions";
+import { Transaction } from "@/db/database";
 
 // Format currency
 const formatCurrency = (amount: number) => {
@@ -32,18 +26,16 @@ const calculatePercentage = (spent: number, limit: number) => {
   return Math.min(Math.round((spent / limit) * 100), 100);
 };
 
-// Total budget stats
-const calculateTotalStats = () => {
-  const totalSpent = mockBudgets.reduce((sum, budget) => sum + budget.spent, 0);
-  const totalLimit = mockBudgets.reduce((sum, budget) => sum + budget.limit, 0);
-  const overBudgetCount = mockBudgets.filter(budget => budget.spent > budget.limit).length;
-  
-  return { totalSpent, totalLimit, overBudgetCount };
-};
-
 const BudgetPage = () => {
   const [activeTab, setActiveTab] = useState("overview");
-  const { totalSpent, totalLimit, overBudgetCount } = calculateTotalStats();
+  const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
+  
+  // Get budgets and transactions from hooks
+  const { budgets, loading: budgetsLoading, getTotalStats } = useBudgets();
+  const { transactions, addTransaction } = useTransactions();
+  
+  // Get total stats
+  const { totalSpent, totalLimit, overBudgetCount } = getTotalStats();
   
   // Page transitions
   const pageVariants = {
@@ -67,6 +59,14 @@ const BudgetPage = () => {
     visible: { opacity: 1, y: 0 }
   };
 
+  // Get list of categories for the transaction form
+  const categories = budgets.map(budget => budget.category);
+
+  // Handle adding a new transaction
+  const handleAddTransaction = async (transaction: Omit<Transaction, 'createdAt'>) => {
+    return await addTransaction(transaction);
+  };
+
   return (
     <MobileLayout>
       <motion.div
@@ -75,13 +75,18 @@ const BudgetPage = () => {
         exit="exit"
         variants={pageVariants}
         transition={{ duration: 0.3 }}
-        className="px-4 pt-6"
+        className="px-4 pt-6 pb-16"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">Budget</h1>
-          <Button variant="default" size="sm" className="rounded-full">
-            <Plus size={16} className="mr-1" /> New Budget
+          <Button 
+            variant="default" 
+            size="sm" 
+            className="rounded-full"
+            onClick={() => setIsTransactionFormOpen(true)}
+          >
+            <Plus size={16} className="mr-1" /> Add Transaction
           </Button>
         </div>
         
@@ -89,7 +94,9 @@ const BudgetPage = () => {
         <Card className="p-5 mb-6 rounded-xl card-shadow">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium">Monthly Budget</h3>
-            <span className="text-sm text-muted-foreground">April 2025</span>
+            <span className="text-sm text-muted-foreground">
+              {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+            </span>
           </div>
           
           <div className="flex items-center justify-between mb-4">
@@ -147,7 +154,10 @@ const BudgetPage = () => {
           </TabsList>
         </Tabs>
         
-        {/* Budget Categories */}
+        {/* Charts for Overview Tab */}
+        <BudgetCharts budgets={budgets} activeTab={activeTab} />
+        
+        {/* Budget Categories - Show in both tabs */}
         <h3 className="text-lg font-semibold mb-4">Budget Categories</h3>
         
         <motion.div
@@ -156,60 +166,79 @@ const BudgetPage = () => {
           animate="visible"
           className="space-y-4"
         >
-          {mockBudgets.map((budget) => (
-            <motion.div 
-              key={budget.id}
-              variants={itemVariants}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="p-4 rounded-xl card-shadow card-hover">
-                <div className="flex items-start mb-3">
-                  <div className={`p-2 rounded-lg mr-3`} style={{ backgroundColor: `${budget.color}20` }}>
-                    <div className="text-foreground">{budget.icon}</div>
-                  </div>
-                  <div className="flex-grow">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">{budget.category}</h4>
-                      <div className="text-right">
-                        <p className={`text-sm font-medium ${budget.spent > budget.limit ? "text-finance-expense" : ""}`}>
-                          {formatCurrency(budget.spent)} 
-                          <span className="text-muted-foreground"> / {formatCurrency(budget.limit)}</span>
-                        </p>
+          {budgetsLoading ? (
+            <p>Loading budgets...</p>
+          ) : (
+            budgets.map((budget) => (
+              <motion.div 
+                key={budget.id}
+                variants={itemVariants}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="p-4 rounded-xl card-shadow card-hover">
+                  <div className="flex items-start mb-3">
+                    <div className={`p-2 rounded-lg mr-3`} style={{ backgroundColor: `${budget.color}20` }}>
+                      <div className="text-foreground">
+                        {budget.iconName === "Utensils" && <Utensils size={18} />}
+                        {budget.iconName === "Car" && <Car size={18} />}
+                        {budget.iconName === "Film" && <Film size={18} />}
+                        {budget.iconName === "ShoppingBag" && <ShoppingBag size={18} />}
+                        {budget.iconName === "Home" && <Home size={18} />}
+                        {budget.iconName === "Wifi" && <Wifi size={18} />}
                       </div>
                     </div>
-                    
-                    <div className="mt-2">
-                      <div className="relative h-2.5 bg-secondary rounded-full overflow-hidden">
-                        <motion.div
-                          className={`absolute top-0 left-0 h-full rounded-full ${budget.color}`}
-                          initial={{ width: "0%" }}
-                          animate={{ width: `${calculatePercentage(budget.spent, budget.limit)}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                        />
+                    <div className="flex-grow">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-medium">{budget.category}</h4>
+                        <div className="text-right">
+                          <p className={`text-sm font-medium ${budget.spent > budget.limit ? "text-finance-expense" : ""}`}>
+                            {formatCurrency(budget.spent)} 
+                            <span className="text-muted-foreground"> / {formatCurrency(budget.limit)}</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="flex justify-between mt-2">
-                      <p className="text-xs text-muted-foreground">
-                        {calculatePercentage(budget.spent, budget.limit)}% used
-                      </p>
                       
-                      {budget.spent > budget.limit ? (
-                        <p className="text-xs text-finance-expense">
-                          Over by {formatCurrency(budget.spent - budget.limit)}
-                        </p>
-                      ) : (
+                      <div className="mt-2">
+                        <div className="relative h-2.5 bg-secondary rounded-full overflow-hidden">
+                          <motion.div
+                            className={`absolute top-0 left-0 h-full rounded-full ${budget.color}`}
+                            initial={{ width: "0%" }}
+                            animate={{ width: `${calculatePercentage(budget.spent, budget.limit)}%` }}
+                            transition={{ duration: 0.8, ease: "easeOut" }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between mt-2">
                         <p className="text-xs text-muted-foreground">
-                          {formatCurrency(budget.limit - budget.spent)} left
+                          {calculatePercentage(budget.spent, budget.limit)}% used
                         </p>
-                      )}
+                        
+                        {budget.spent > budget.limit ? (
+                          <p className="text-xs text-finance-expense">
+                            Over by {formatCurrency(budget.spent - budget.limit)}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {formatCurrency(budget.limit - budget.spent)} left
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
+                </Card>
+              </motion.div>
+            ))
+          )}
         </motion.div>
+        
+        {/* Transaction Form */}
+        <TransactionForm 
+          isOpen={isTransactionFormOpen}
+          onClose={() => setIsTransactionFormOpen(false)}
+          onAddTransaction={handleAddTransaction}
+          categories={categories}
+        />
       </motion.div>
     </MobileLayout>
   );

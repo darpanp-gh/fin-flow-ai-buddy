@@ -4,32 +4,24 @@ import { motion } from "framer-motion";
 import MobileLayout from "@/components/layout/MobileLayout";
 import AppHeader from "@/components/layout/AppHeader";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { 
   Search, 
-  Filter,
   ArrowUpRight,
   ArrowDownRight,
   PlusCircle,
   Calendar,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Wallet,
+  CreditCard,
+  Landmark
 } from "lucide-react";
-
-// Mock data
-const mockTransactions = [
-  { id: 1, title: "Grocery Store", amount: -84.20, date: "Apr 10, 2025", category: "Food" },
-  { id: 2, title: "Salary Deposit", amount: 2400.00, date: "Apr 5, 2025", category: "Income" },
-  { id: 3, title: "Electric Bill", amount: -120.50, date: "Mar 28, 2025", category: "Utilities" },
-  { id: 4, title: "Subscription", amount: -15.99, date: "Mar 25, 2025", category: "Entertainment" },
-  { id: 5, title: "Freelance Work", amount: 350.00, date: "Mar 20, 2025", category: "Income" },
-  { id: 6, title: "Restaurant", amount: -68.50, date: "Mar 18, 2025", category: "Food" },
-  { id: 7, title: "Gas Station", amount: -45.23, date: "Mar 15, 2025", category: "Transportation" },
-  { id: 8, title: "Movie Tickets", amount: -32.00, date: "Mar 10, 2025", category: "Entertainment" },
-  { id: 9, title: "Interest", amount: 5.21, date: "Mar 5, 2025", category: "Income" },
-  { id: 10, title: "Mobile Phone", amount: -65.00, date: "Mar 3, 2025", category: "Utilities" },
-];
+import TransactionForm from "@/components/TransactionForm";
+import { useTransactions } from "@/hooks/useTransactions";
+import { useBudgets } from "@/hooks/useBudgets";
+import { Transaction } from "@/db/database";
 
 // Format currency
 const formatCurrency = (amount: number) => {
@@ -41,8 +33,8 @@ const formatCurrency = (amount: number) => {
 };
 
 // Group transactions by date
-const groupTransactionsByDate = (transactions: typeof mockTransactions) => {
-  const groups: Record<string, typeof mockTransactions> = {};
+const groupTransactionsByDate = (transactions: Transaction[]) => {
+  const groups: Record<string, Transaction[]> = {};
   
   transactions.forEach(transaction => {
     if (!groups[transaction.date]) {
@@ -54,12 +46,31 @@ const groupTransactionsByDate = (transactions: typeof mockTransactions) => {
   return Object.entries(groups);
 };
 
+// Get payment mode icon
+const getPaymentModeIcon = (mode: string) => {
+  switch (mode) {
+    case 'cash':
+      return <Wallet size={14} className="ml-1 text-muted-foreground" />;
+    case 'bank':
+      return <Landmark size={14} className="ml-1 text-muted-foreground" />;
+    case 'card':
+      return <CreditCard size={14} className="ml-1 text-muted-foreground" />;
+    default:
+      return null;
+  }
+};
+
 const TransactionsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
+  
+  // Get transactions from hook
+  const { transactions, loading, addTransaction } = useTransactions();
+  const { budgets } = useBudgets();
   
   // Filter transactions based on tab and search
-  const filteredTransactions = mockTransactions.filter(transaction => {
+  const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = transaction.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           transaction.category.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -71,6 +82,14 @@ const TransactionsPage = () => {
   });
   
   const groupedTransactions = groupTransactionsByDate(filteredTransactions);
+  
+  // Get list of categories for the transaction form
+  const categories = budgets.map(budget => budget.category);
+  
+  // Handle adding a new transaction
+  const handleAddTransaction = async (transaction: Omit<Transaction, 'createdAt'>) => {
+    return await addTransaction(transaction);
+  };
   
   // Page transitions
   const pageVariants = {
@@ -102,7 +121,7 @@ const TransactionsPage = () => {
         exit="exit"
         variants={pageVariants}
         transition={{ duration: 0.3 }}
-        className="px-4 pt-6"
+        className="px-4 pt-6 pb-16"
       >
         {/* Header */}
         <AppHeader title="Transactions" subtitle="Manage your money flow" />
@@ -129,7 +148,12 @@ const TransactionsPage = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button variant="default" size="icon" className="rounded-full">
+            <Button 
+              variant="default" 
+              size="icon" 
+              className="rounded-full"
+              onClick={() => setIsTransactionFormOpen(true)}
+            >
               <PlusCircle size={18} />
             </Button>
           </motion.div>
@@ -158,7 +182,11 @@ const TransactionsPage = () => {
         </div>
         
         {/* Transactions list */}
-        {filteredTransactions.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-10">
+            <p>Loading transactions...</p>
+          </div>
+        ) : filteredTransactions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="p-4 bg-muted rounded-full mb-4">
               <Search size={32} className="text-muted-foreground" />
@@ -202,9 +230,12 @@ const TransactionsPage = () => {
                       </div>
                       <div>
                         <p className="font-medium">{transaction.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {transaction.category}
-                        </p>
+                        <div className="flex items-center">
+                          <p className="text-xs text-muted-foreground">
+                            {transaction.category}
+                          </p>
+                          {getPaymentModeIcon(transaction.paymentMode)}
+                        </div>
                       </div>
                     </div>
                     <p className={`font-medium ${transaction.amount > 0 ? "text-finance-income" : "text-finance-expense"}`}>
@@ -216,6 +247,14 @@ const TransactionsPage = () => {
             ))}
           </motion.div>
         )}
+        
+        {/* Transaction Form */}
+        <TransactionForm 
+          isOpen={isTransactionFormOpen}
+          onClose={() => setIsTransactionFormOpen(false)}
+          onAddTransaction={handleAddTransaction}
+          categories={categories}
+        />
       </motion.div>
     </MobileLayout>
   );
