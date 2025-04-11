@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import MobileLayout from "@/components/layout/MobileLayout";
+import AppHeader from "@/components/layout/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -104,19 +105,34 @@ const TransactionsPage = () => {
         className="px-4 pt-6"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Transactions</h1>
-          <div className="flex space-x-2">
+        <AppHeader title="Transactions" subtitle="Manage your money flow" />
+        
+        {/* Action buttons */}
+        <div className="flex justify-end space-x-2 mb-6">
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Button variant="outline" size="icon" className="rounded-full">
               <Calendar size={18} />
             </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Button variant="outline" size="icon" className="rounded-full">
               <FileSpreadsheet size={18} />
             </Button>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <Button variant="default" size="icon" className="rounded-full">
               <PlusCircle size={18} />
             </Button>
-          </div>
+          </motion.div>
         </div>
         
         {/* Search and filter */}
@@ -165,9 +181,13 @@ const TransactionsPage = () => {
                 {transactions.map((transaction) => (
                   <motion.div
                     key={transaction.id}
-                    className="flex items-center justify-between p-3 mb-2 bg-card hover:bg-secondary/50 rounded-xl card-shadow"
+                    className="flex items-center justify-between p-3 mb-2 bg-card hover:bg-secondary/50 rounded-xl card-shadow theme-transition dark:shine-effect"
                     variants={itemVariants}
                     transition={{ duration: 0.2 }}
+                    whileHover={{ 
+                      y: -2,
+                      boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)" 
+                    }}
                   >
                     <div className="flex items-center">
                       <div className={`

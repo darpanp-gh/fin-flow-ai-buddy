@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import MobileLayout from "@/components/layout/MobileLayout";
+import AppHeader from "@/components/layout/AppHeader";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { 
@@ -133,60 +134,115 @@ const HomePage = () => {
         className="px-4 pt-6"
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Hello, Alex</h1>
-            <p className="text-muted-foreground">Welcome to your finances</p>
-          </div>
-          <div className="relative">
-            <Bell size={24} className="text-foreground" />
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-finance-alert"></span>
-          </div>
-        </div>
+        <AppHeader />
         
         {/* Main Balance Card */}
-        <Card className="p-6 mb-6 rounded-xl card-shadow animated-gradient text-white overflow-hidden relative">
-          <div className="relative z-10">
-            <p className="text-white/80 text-sm mb-1">Current Balance</p>
-            <h2 className="text-3xl font-bold mb-4">{formatCurrency(animatedBalance)}</h2>
+        <motion.div
+          whileHover={{ y: -5 }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+          className="mb-6"
+        >
+          <Card className="p-6 rounded-xl card-shadow animated-gradient text-white overflow-hidden relative glow-effect theme-transition">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="relative z-10"
+            >
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.8 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-white/80 text-sm mb-1"
+              >
+                Current Balance
+              </motion.p>
+              
+              <motion.h2
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5, type: "spring", stiffness: 200 }}
+                className="text-3xl font-bold mb-4"
+              >
+                {formatCurrency(animatedBalance)}
+              </motion.h2>
+              
+              <div className="flex items-center justify-between mt-6">
+                <motion.div 
+                  className="flex items-center"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4, duration: 0.3 }}
+                >
+                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg mr-2 shine-effect">
+                    <ArrowUpCircle size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/80">Income</p>
+                    <p className="text-sm font-medium">{formatCurrency(mockBalance.income)}</p>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="flex items-center"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg mr-2 shine-effect">
+                    <ArrowDownCircle size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/80">Expenses</p>
+                    <p className="text-sm font-medium">{formatCurrency(mockBalance.expenses)}</p>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="flex items-center"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.6, duration: 0.3 }}
+                >
+                  <div className="p-2 bg-white/20 backdrop-blur-md rounded-lg mr-2 shine-effect">
+                    <PiggyBank size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-white/80">Savings</p>
+                    <p className="text-sm font-medium">{formatCurrency(mockBalance.savings)}</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
             
-            <div className="flex items-center justify-between mt-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 rounded-lg mr-2">
-                  <ArrowUpCircle size={16} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-white/80">Income</p>
-                  <p className="text-sm font-medium">{formatCurrency(mockBalance.income)}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 rounded-lg mr-2">
-                  <ArrowDownCircle size={16} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-white/80">Expenses</p>
-                  <p className="text-sm font-medium">{formatCurrency(mockBalance.expenses)}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 rounded-lg mr-2">
-                  <PiggyBank size={16} className="text-white" />
-                </div>
-                <div>
-                  <p className="text-xs text-white/80">Savings</p>
-                  <p className="text-sm font-medium">{formatCurrency(mockBalance.savings)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Decorative elements */}
-          <div className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10" />
-          <div className="absolute -right-5 -bottom-20 w-40 h-40 rounded-full bg-white/5" />
-        </Card>
+            {/* Decorative elements */}
+            <motion.div 
+              className="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-white/10 dark:bg-white/5 floating"
+              animate={{ 
+                scale: [1, 1.05, 1],
+                opacity: [0.1, 0.15, 0.1]
+              }}
+              transition={{ 
+                duration: 4,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+            />
+            <motion.div 
+              className="absolute -right-5 -bottom-20 w-40 h-40 rounded-full bg-white/5 dark:bg-white/3 floating"
+              animate={{ 
+                scale: [1, 1.1, 1],
+                opacity: [0.05, 0.1, 0.05]
+              }}
+              transition={{ 
+                duration: 5,
+                repeat: Infinity,
+                repeatType: "reverse",
+                delay: 0.5
+              }}
+            />
+          </Card>
+        </motion.div>
         
         {/* AI Insight Card */}
         <Card className="p-4 mb-6 rounded-xl card-shadow border-l-4 border-l-amber-400">
@@ -261,9 +317,13 @@ const HomePage = () => {
             {mockTransactions.map((transaction, index) => (
               <motion.div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 mb-2 bg-card hover:bg-secondary/50 rounded-xl card-shadow"
+                className="flex items-center justify-between p-3 mb-2 bg-card hover:bg-secondary/50 rounded-xl card-shadow theme-transition dark:shine-effect"
                 variants={itemVariants}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
+                whileHover={{ 
+                  y: -2,
+                  boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)" 
+                }}
               >
                 <div className="flex items-center">
                   <div className={`

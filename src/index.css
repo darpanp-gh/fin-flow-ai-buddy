@@ -45,42 +45,42 @@
   }
 
   .dark {
-    --background: 222.2 28% 7%;
+    --background: 230 25% 5%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 20% 10%;
+    --card: 229 24% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 25% 9%;
+    --popover: 229 25% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 255 70% 60%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 263 85% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 229 32% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 229 32% 15%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 262 83% 58%;
+    --accent: 263 85% 60%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 255 70% 70%;
+    --border: 229 30% 15%;
+    --input: 229 30% 15%;
+    --ring: 263 85% 65%;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 230 25% 7%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 263 85% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 230 25% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 230 25% 12%;
+    --sidebar-ring: 263 85% 60%;
   }
 }
 
@@ -156,6 +156,23 @@
   }
 }
 
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(var(--primary-rgb), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
@@ -180,6 +197,99 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300;
   }
+  
+  .dark .theme-transition {
+    transition: all 0.5s ease;
+  }
+  
+  .dark .card-shadow {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark .glow-effect {
+    position: relative;
+    z-index: 1;
+  }
+  
+  .dark .glow-effect::after {
+    content: "";
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    right: -15px;
+    bottom: -15px;
+    background: radial-gradient(circle at center, 
+                              hsl(var(--primary) / 0.3) 0%,
+                              transparent 70%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  
+  .dark .glow-effect:hover::after {
+    opacity: 1;
+  }
+  
+  .dark .animated-bg {
+    background: linear-gradient(
+      -45deg, 
+      hsl(var(--background)) 25%, 
+      hsl(var(--secondary)) 50%, 
+      hsl(var(--background)) 75%
+    );
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+  }
+  
+  .dark .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .dark .shine-effect::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%
+    );
+    transform: rotate(30deg);
+    animation: shimmer 6s linear infinite;
+    pointer-events: none;
+  }
+  
+  .dark .floating {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+/* Dark mode specific RGB variables for glow effects */
+.dark {
+  --primary-rgb: 147, 51, 234;
+}
+
+/* Theme transition effects */
+.theme-toggle-transition * {
+  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, opacity 0.5s ease;
+}
+
+/* Theme switching animation */
+.theme-switching {
+  animation: flash 0.5s ease;
+}
+
+@keyframes flash {
+  0% { opacity: 1; }
+  50% { opacity: 0.8; }
+  100% { opacity: 1; }
 }
